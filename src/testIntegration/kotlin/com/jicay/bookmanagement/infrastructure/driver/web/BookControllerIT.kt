@@ -3,9 +3,7 @@ package com.jicay.bookmanagement.infrastructure.driver.web
 import com.jicay.bookmanagement.domain.model.Book
 import com.jicay.bookmanagement.domain.usecase.BookUseCase
 import com.ninjasquad.springmockk.MockkBean
-import io.mockk.every
-import io.mockk.justRun
-import io.mockk.verify
+import io.mockk.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -97,4 +95,17 @@ class BookControllerIT {
 
         verify(exactly = 0) { bookUseCase.addBook(any()) }
     }
+
+    @Test
+    fun `rest route reserve book`() {
+        every { bookUseCase.reserveABook(any()) } just Runs
+
+        mockMvc.post("/books/reserve/aBook")
+                .andExpect {
+                    status { isOk() }
+                }
+
+        verify(exactly = 1) { bookUseCase.reserveABook("aBook") }
+    }
+
 }

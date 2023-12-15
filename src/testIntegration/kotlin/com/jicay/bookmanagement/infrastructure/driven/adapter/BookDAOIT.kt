@@ -45,11 +45,11 @@ class BookDAOIT {
         performQuery(
             // language=sql
             """
-               insert into book (title, author)
+               insert into book (title, author, isreserved)
                values 
-                   ('Hamlet', 'Shakespeare'),
-                   ('Les fleurs du mal', 'Beaudelaire'),
-                   ('Harry Potter', 'Rowling');
+                   ('Hamlet', 'Shakespeare',false),
+                   ('Les fleurs du mal', 'Beaudelaire',false),
+                   ('Harry Potter', 'Rowling',false);
             """.trimIndent())
 
         // WHEN
@@ -57,9 +57,9 @@ class BookDAOIT {
 
         // THEN
         assertThat(res).containsExactlyInAnyOrder(
-            Book("Hamlet", "Shakespeare"),
-            Book("Les fleurs du mal", "Beaudelaire"),
-            Book("Harry Potter", "Rowling")
+            Book("Hamlet", "Shakespeare",false),
+            Book("Les fleurs du mal", "Beaudelaire",false),
+            Book("Harry Potter", "Rowling",false)
         )
     }
 
@@ -67,7 +67,7 @@ class BookDAOIT {
     fun `create book in db`() {
         // GIVEN
         // WHEN
-        bookDAO.createBook(Book("Les misérables", "Victor Hugo"))
+        bookDAO.createBook(Book("Les misérables", "Victor Hugo",false))
 
         // THEN
         val res = performQuery(
@@ -80,7 +80,54 @@ class BookDAOIT {
         assertThat(res[0]["id"] is Int).isTrue()
         assertThat(res[0]["title"]).isEqualTo("Les misérables")
         assertThat(res[0]["author"]).isEqualTo("Victor Hugo")
+        assertThat(res[0]["isreserved"]).isEqualTo(false)
+
     }
+
+    @Test
+    fun `get a specific book by title in db`() {
+        // GIVEN
+        performQuery(
+                // language=sql
+                """
+       INSERT INTO book (title, author, isreserved)
+       VALUES 
+           ('Le titre d un livre', 'Un auteur', false);
+    """.trimIndent()
+        )
+
+        // WHEN
+        val res = bookDAO.getBookByTitle("Le titre d un livre")
+
+        // THEN
+        assertThat(res).isNotNull()
+        assertThat(res?.isreserved).isEqualTo(false)  // Utilisation de isReserved au lieu de isreserved
+        assertThat(res?.name).isEqualTo("Le titre d un livre")  // Utilisation de title au lieu de name
+        assertThat(res?.author).isEqualTo("Un auteur")
+    }
+    @Test
+    fun `reserve a book in db`() {
+        // GIVEN
+        performQuery(
+                // language=sql
+                """
+       INSERT INTO book (title, author, isreserved)
+       VALUES 
+           ('Le titre d un livre', 'Un auteur', false);
+    """.trimIndent()
+        )
+
+        // WHEN
+        bookDAO.reserveABook("Le titre d un livre")
+
+        // THEN
+        val reservedBook = bookDAO.getBookByTitle("Le titre d un livre")
+        assertThat(reservedBook).isNotNull()
+        assertThat(reservedBook?.isreserved).isEqualTo(true)
+        assertThat(reservedBook?.name).isEqualTo("Le titre d un livre")
+        assertThat(reservedBook?.author).isEqualTo("Un auteur")
+    }
+
 
     protected fun performQuery(sql: String): List<Map<String, Any>> {
         val hikariConfig = HikariConfig()

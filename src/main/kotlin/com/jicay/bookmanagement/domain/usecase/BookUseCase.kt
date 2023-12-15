@@ -15,4 +15,16 @@ class BookUseCase(
     fun addBook(book: Book) {
         bookPort.createBook(book)
     }
+
+    fun reserveABook(title: String) {
+        val book = bookPort.getBookByTitle(title)
+
+        if (book != null) {
+            if (!book.isreserved) {
+                bookPort.reserveABook(title)
+            } else{
+                throw Exception("Le livre est déjà reservé")
+            }
+        }
+    }
 }

@@ -5,4 +5,7 @@ import com.jicay.bookmanagement.domain.model.Book
 interface BookPort {
     fun getAllBooks(): List<Book>
     fun createBook(book: Book)
+    fun reserveABook(title: String)
+    fun getBookByTitle(title: String): Book?
+
 }

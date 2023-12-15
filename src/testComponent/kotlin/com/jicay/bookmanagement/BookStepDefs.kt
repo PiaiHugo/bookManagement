@@ -55,17 +55,44 @@ class BookStepDefs {
     fun shouldHaveListOfBooks(payload: List<Map<String, Any>>) {
         val expectedResponse = payload.joinToString(separator = ",", prefix = "[", postfix = "]") { line ->
             """
-                ${
-                    line.entries.joinToString(separator = ",", prefix = "{", postfix = "}") {
+            ${
+                line.entries.joinToString(separator = ",", prefix = "{", postfix = "}") {
+                    if (it.key == "isreserved") {
+                        """"${it.key}": ${it.value}"""
+                    } else {
                         """"${it.key}": "${it.value}""""
                     }
                 }
-            """.trimIndent()
-
+            }
+        """.trimIndent()
         }
-        assertThat(lastBookResult.extract().body().jsonPath().prettify())
-            .isEqualTo(JsonPath(expectedResponse).prettify())
 
+        assertThat(lastBookResult.extract().body().jsonPath().prettify())
+                .isEqualTo(JsonPath(expectedResponse).prettify())
+    }
+
+
+    @When("the user reserves the book {string}")
+    fun reserveABook(title: String) {
+        given()
+                .contentType(ContentType.JSON)
+                .`when`()
+                .post("/books/reserve/$title")
+                .then()
+                .statusCode(200)
+    }
+    @Then("the book {string} should be reserved")
+    fun checkBookReservation(title: String) {
+        val isReserved = given()
+                .`when`()
+                .get("/books")
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath()
+                .getBoolean("find { it.title == '$title' }.isReserved")
+
+        assertThat(isReserved).isEqualTo(true)
     }
 
     companion object {
